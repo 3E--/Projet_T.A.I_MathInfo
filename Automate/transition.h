@@ -1,7 +1,7 @@
 #ifndef TRANSITION_H
 #define TRANSITION_H
 
-#include "etat.h"
+#include "Automate/etat.h"
 #include "string"
 using namespace std;
 class Etat;// Evite les erreurs du compilateur, pour l'utilisation de la classe Etat dans la class Transition et vice versa

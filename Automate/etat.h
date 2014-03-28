@@ -2,7 +2,7 @@
 #define ETAT_H
 
 #include "list"
-#include "transition.h"
+#include "Automate/transition.h"
 #include "string"
 using namespace std;
 /** a suprimer **/

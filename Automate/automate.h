@@ -1,8 +1,8 @@
 #ifndef AUTOMATE_H
 #define AUTOMATE_H
 
-#include "etat.h"
-#include "transition.h"
+#include "Automate/etat.h"
+#include "Automate/transition.h"
 /** a suprimer **/
 #include <iostream>
 #include <fstream>
@@ -28,6 +28,10 @@ class Automate{
 public:
     Automate();
 
+    list <Etat> &getListeDeTousLesEtats();
+    list<Etat *> &getListeDeTousLesEtatsInitiaux();
+    list<Etat *> &getListeDeTousLesEtatsTerminaux();
+    list<Transition> &getListeDeTousLesTransitions();
     bool esQueLEtatExisteDeja(const string &nomDeLEtatARechercher);
     bool esQueLaTransitionExisteDeja(const Transition &transitionARechercher);
 
@@ -49,6 +53,7 @@ public:
 
     bool estStandard();
     bool estDeterministe();
+
 };
 
 #endif // AUTOMATE_H

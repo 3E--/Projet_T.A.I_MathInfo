@@ -1,22 +1,18 @@
-#include "analysesyntaxique.h"
-///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////
-AnalyseSyntaxique::AnalyseSyntaxique(){
-    /** **************
-     * CONSTRUCTEUR
-     * ***************/
+#include "analyseurSyntaxique.h"
 
+AnalyseurSyntaxique::AnalyseurSyntaxique(QObject *parent) : QObject(parent){
 
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-Automate & AnalyseSyntaxique::genererUnAutomate(const string &liensDuFichierTexte){
+Automate & AnalyseurSyntaxique::genererUnAutomate(const string &liensDuFichierTexte){
     /***********************************************************************************************************
       * CETTE METHODE PERMET DE GENERER UN AUTOMATE A PARTIR D'UN FICHIER TEXTE, SELON UNE SYNTAXTE PARTICULIERE
       * *********************************************************************************************************/
 
     /// CETTE OPERATION COMPLEXE EST SUCEPTIBLE DE GENERER DES ERREURS, DONC ON EFFECTUE UN TRY CATCH POUR GERE LES EXEPTIONS
     try{
+        emit signalInformation("[Info] Lecture du fichier");
         // LECTURE DU FICHIER TEXTE DE L'AUTOMATE
         queue<string> queueFichierTexte=lectureDuFichierTexte(liensDuFichierTexte);
 
@@ -34,11 +30,9 @@ Automate & AnalyseSyntaxique::genererUnAutomate(const string &liensDuFichierText
                 ////////////////////////////////////////////////////
                 // * SI LA LIGNE CONTIENT LE MARQUEUR "ETATS:"  * //
                 ////////////////////////////////////////////////////
-                /** ligne = "ETATS: 1,2,3" **/
+
                 // SUPRIME LE MARQUEUR "ETAT:"
                 ligne.erase(0,positionDuMarqeur+6);
-                /** ligne = " 1,2,3" **/
-
 
 
                 // ON SEPARE CHAQUE ETAT EN FONCTION DU DELIMITEUR ','
@@ -51,6 +45,16 @@ Automate & AnalyseSyntaxique::genererUnAutomate(const string &liensDuFichierText
 
                     queueNomsEtats.pop();
                 }
+
+                // //////////////////////
+                // AFICHAGE DU MESSAGE //
+                // //////////////////////
+                list<Etat> listEtatAutomate= automate->getListeDeTousLesEtats();
+                for (list<Etat>::iterator it = listEtatAutomate.begin(); it != listEtatAutomate.end(); it++)
+                    /// SI ON TROUVE UNE TRANSITION QUI POINTE SUR L'UNIQUE ETAT TERMINAL, L'AUTOMATE N'EST PAS STANDARD
+                    emit signalInformation("[Info] Etat ajoute : \""+it->getNom()+"\"");
+
+
             }
             else if(!(positionDuMarqeur=ligne.find("ETATS INITIAUX:"))){
                 ////////////////////////////////////////////////////////////
@@ -76,6 +80,15 @@ Automate & AnalyseSyntaxique::genererUnAutomate(const string &liensDuFichierText
 
                     queueNomsEtats.pop();
                 }
+
+                // //////////////////////
+                // AFICHAGE DU MESSAGE //
+                // //////////////////////
+                list<Etat*> listEtatAutomate= automate->getListeDeTousLesEtatsInitiaux();
+                for (list<Etat*>::iterator it = listEtatAutomate.begin(); it != listEtatAutomate.end(); it++)
+                    /// SI ON TROUVE UNE TRANSITION QUI POINTE SUR L'UNIQUE ETAT TERMINAL, L'AUTOMATE N'EST PAS STANDARD
+                    emit signalInformation("[Info] Etat Initial ajoute : \""+(*it)->getNom()+"\"");
+
             }
             else if(!(positionDuMarqeur=ligne.find("ETATS TERMINAUX:"))){
                 /////////////////////////////////////////////////////////////
@@ -101,6 +114,14 @@ Automate & AnalyseSyntaxique::genererUnAutomate(const string &liensDuFichierText
 
                     queueNomsEtats.pop();
                 }
+
+                // //////////////////////
+                // AFICHAGE DU MESSAGE //
+                // //////////////////////
+                list<Etat*> listEtatAutomate= automate->getListeDeTousLesEtatsTerminaux();
+                for (list<Etat*>::iterator it = listEtatAutomate.begin(); it != listEtatAutomate.end(); it++)
+                    /// SI ON TROUVE UNE TRANSITION QUI POINTE SUR L'UNIQUE ETAT TERMINAL, L'AUTOMATE N'EST PAS STANDARD
+                    emit signalInformation("[Info] Etat Terminal ajoute : \""+(*it)->getNom()+"\"");
             }
             else if(!(positionDuMarqeur=ligne.find("TRANSITIONS:"))){
                 /////////////////////////////////////////////////////////
@@ -142,7 +163,15 @@ Automate & AnalyseSyntaxique::genererUnAutomate(const string &liensDuFichierText
                     automate->ajouterUneTransition(transition);
 
                     queueTransitions.pop();
+
                 }
+                // //////////////////////
+                // AFICHAGE DU MESSAGE //
+                // //////////////////////
+                list<Transition> listTransitions= automate->getListeDeTousLesTransitions();
+                for (list<Transition>::iterator it = listTransitions.begin(); it != listTransitions.end(); it++)
+                    /// SI ON TROUVE UNE TRANSITION QUI POINTE SUR L'UNIQUE ETAT TERMINAL, L'AUTOMATE N'EST PAS STANDARD
+                    emit signalInformation("[Info] Transition ajoute : \""+it->getEtatCourant()->getNom()+"--"+it->getNom()+"->"+it->getEtatSuivant()->getNom()+"\"");
             }
             // SUPPRIME LA LIGNE ( LA TETE DE LA QUEUE )
             queueFichierTexte.pop();
@@ -158,7 +187,7 @@ Automate & AnalyseSyntaxique::genererUnAutomate(const string &liensDuFichierText
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-queue<string> &AnalyseSyntaxique::lectureDuFichierTexte(const string &liensDuFichierTexte){
+queue<string> AnalyseurSyntaxique::lectureDuFichierTexte(const string &liensDuFichierTexte){
     /********************************************************************************
      * CETTE METHODE PERMET DE METRE CHAQUE LIGNE DU FICHIER TEXTE DANS UNE QUEUE
      * *****************************************************************************/
@@ -183,19 +212,20 @@ queue<string> &AnalyseSyntaxique::lectureDuFichierTexte(const string &liensDuFic
         queueFichierTexte->push(ligne);
     }
 
+
     fichierTexte.close();
 
     return *queueFichierTexte;
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-queue<string> &AnalyseSyntaxique::splitToQueue(const string & texte,const string & delimiteur){
+queue<string> &AnalyseurSyntaxique::splitToQueue(const string & texte,const string & delimiteur){
     /***********************************************************************************************************************************************
      * CETTE METHODE PERMET DE SEPARER PAR RAPORT A UN DELIMITEUR, UNE CHAINE DE CARACTERE EN SOUS CHAINNE DE DE CARACTERE CONTENUE DANS UNE QUEUE
      * ********************************************************************************************************************************************/
 
     /// SI LA CHAINE DE CARACTERE A SEPARER EST VIDE ON DECLENCHE UNE EXEPTION
-    if(texte.empty()) throw "Erreur : la chaine de caractere à 'speparer' est vide.";
+    //if(texte.empty()) throw "Erreur : la chaine de caractere à 'speparer' est vide.";
 
     // CREATION DE LA QUEUE QUI VAS CONTENIR LES CHAINE DE CARACTERE SEPARER PAR LE DELIMITEUR
     queue<string> *queuesplitToQueueResult=new queue<string>;
@@ -227,13 +257,13 @@ queue<string> &AnalyseSyntaxique::splitToQueue(const string & texte,const string
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-vector<string> &AnalyseSyntaxique::splitToVector(const string & texte,const string & delimiteur){
+vector<string> &AnalyseurSyntaxique::splitToVector(const string & texte,const string & delimiteur){
     /** ********************************************************************************************************************************************
      * CETTE METHODE PERMET DE SEPARER PAR RAPORT A UN DELIMITEUR, UNE CHAINE DE CARACTERE EN SOUS CHAINNE DE DE CARACTERE CONTENUE DANS UNE QUEUE
      * ********************************************************************************************************************************************/
 
     /// SI LA CHAINE DE CARACTERE A SEPARER EST VIDE ON DECLENCHE UNE EXEPTION
-    if(texte.empty()) throw "Erreur : la chaine de caractere à 'speparer' est vide.";
+   // if(texte.empty()) throw "Erreur : la chaine de caractere à 'speparer' est vide.";
 
     // CREATION DE LE VECTOR QUI VAS CONTENIR LES CHAINE DE CARACTERE SEPARER PAR LE DELIMITEUR
     vector<string> *splitToVectorResult=new vector<string>;
@@ -248,14 +278,14 @@ vector<string> &AnalyseSyntaxique::splitToVector(const string & texte,const stri
 
         // ON SUPPRIME LES EVENTUELLES ESPACES
         suprimerLesCaracteres(texteSepare," ");
-        cout << "texteSepare :" << texteSepare <<endl;
+
         // SUPPRME LA CHAINE DE CARACTERE DU TEXTE A TRAITER
         texteTemporaire.erase(0,marqeurFin+1);
 
         // AJOUTE DANS LE VECTOR LA SOUS CHAINE DE CARACTERE QUI CE TROUVE ANVANT LE DELIMITEUR
         splitToVectorResult->push_back(texteSepare);
     }
-    cout << "texteSepare :" << texteTemporaire <<endl;
+
     // AJOUTE LA FIN DANS LE VECTOR
     splitToVectorResult->push_back(texteTemporaire);
 
@@ -264,13 +294,13 @@ vector<string> &AnalyseSyntaxique::splitToVector(const string & texte,const stri
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-void AnalyseSyntaxique::suprimerLesCaracteres(string& texte,const string &aSupprimer){
+void AnalyseurSyntaxique::suprimerLesCaracteres(string& texte,const string &aSupprimer){
     /*******************************************************************************************
      * METHODE : PERMET DE SUPRIMER TOUS LES CARRACTERE DE LA VARIABLE 'texte'QUI SE TROUVENT DANS LA VARIABLE 'aSuprimer'
      * *****************************************************************************************/
 
     /// SI LA CHAINE DE CARACTERE EST VIDE ON SORT DE LA METHODE
-    if(texte.empty()) return;
+    //if(texte.empty()) return;
     // ON RECUPERE LA POSITION DU CARACTERE A SUPPRIMER
     string::size_type pos = texte.find_last_not_of(aSupprimer);
 

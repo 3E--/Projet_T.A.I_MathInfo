@@ -337,3 +337,16 @@ bool Automate::estDeterministe(){
     }
     return true;
 }
+
+list <Etat> &Automate::getListeDeTousLesEtats(){
+    return listeDeTousLesEtats;
+}
+list<Etat *> &Automate::getListeDeTousLesEtatsInitiaux(){
+    return listeDeTousLesEtatsInitiaux;
+}
+list<Etat *> &Automate::getListeDeTousLesEtatsTerminaux(){
+    return listeDeTousLesEtatsTerminaux;
+}
+list<Transition> &Automate::getListeDeTousLesTransitions(){
+    return listeDeTousLesTransitions;
+}
