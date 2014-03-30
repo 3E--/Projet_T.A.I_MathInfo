@@ -1,6 +1,10 @@
 Projet_T.A.I_MathInfo
 =====================
 
+## Environement de développement :
+- C++.
+- Qt 5.2.1.
+- Windows 8.1 64 bit.
 
 ## **Taches terminer :**
 
